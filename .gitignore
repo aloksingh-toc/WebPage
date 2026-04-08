@@ -1,0 +1,10 @@
+Mangalam_HDPE_Website.zip
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Editor folders
+.vscode/
+.idea/
