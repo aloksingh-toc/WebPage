@@ -29,7 +29,7 @@
     contact: {
       phone: '+91\u202F98765\u202F43210',
       email: 'info@mangalamhdpe.com',
-      address: 'Industrial Area, Phase II, Rajasthan, India'
+      address: '2126, Road No. 2, GIDC Sachin, Surat - 394 230 Gujarat, India'
     }
   };
 
@@ -162,6 +162,13 @@
   const emailTop = $('#config-email-top');
   if (phoneTop) phoneTop.textContent = CONFIG.contact.phone;
   if (emailTop) emailTop.textContent = CONFIG.contact.email;
+
+  const addrFooter = $('#config-address-footer');
+  const phoneFooter = $('#config-phone-footer');
+  const emailFooter = $('#config-email-footer');
+  if (addrFooter) addrFooter.textContent = CONFIG.contact.address;
+  if (phoneFooter) phoneFooter.textContent = CONFIG.contact.phone;
+  if (emailFooter) emailFooter.textContent = CONFIG.contact.email;
 
   /* ===========================================================
      1. STICKY HEADER
