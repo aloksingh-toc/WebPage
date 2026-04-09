@@ -49,12 +49,17 @@
   --shadow-sm:   0 2px 8px rgba(0,0,0,.08);
   --shadow-md:   0 4px 24px rgba(0,0,0,.14);
   --shadow-lg:   0 8px 48px rgba(0,0,0,.22);
+  --shadow-xl:   0 16px 64px rgba(0,0,0,.32);
   --shadow-navy: 0 4px 32px rgba(10,22,40,.45);
 
   /* Transitions */
   --trs-fast:  150ms ease;
   --trs-mid:   280ms ease;
   --trs-slow:  420ms ease;
+
+  /* Component coupling tokens */
+  --thumbs-h:  66px; /* carousel thumb strip — kept in sync with .zoom-panel height calc */
+  --header-h:  72px; /* sticky header height — used for scroll-margin-top of all sections */
 
   /* ── Responsive Padding tokens (desktop default) ── */
   --pad-v:  100px;
@@ -76,7 +81,23 @@
 /* ── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { scroll-behavior: smooth; font-size: 16px; }
+html { font-size: 16px; }
+
+/* Global keyboard focus ring — visible for keyboard nav, hidden for mouse/touch */
+:focus-visible {
+  outline: 3px solid var(--c-blue-bright);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Respect user's motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 #hero,
 #about,
@@ -86,7 +107,17 @@ html { scroll-behavior: smooth; font-size: 16px; }
 #faq,
 #trust,
 #contact {
-  scroll-margin-top: 140px;
+  scroll-margin-top: var(--header-h); /* kept in sync with --header-h token */
+}
+
+@media (max-width: 900px) {
+  :root { --header-h: 64px; }
+  #hero, #about, #products, #specs,
+  #process, #faq, #trust, #contact {
+    scroll-margin-top: var(--header-h);
+  }
+}
+  }
 }
 
 body {
@@ -103,9 +134,6 @@ ul  { list-style: none; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 
 /* ── Utility: Section Wrapper ────────────────────────────── */
-.section-wrapper {
-  padding: var(--pad-v) var(--pad-h);
-}
 .container {
   max-width: var(--max-w);
   margin: 0 auto;
@@ -221,6 +249,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   letter-spacing: .06em;
   text-transform: uppercase;
 }
+/* Modifier: white brand name for dark backgrounds (e.g. footer) */
+.brand-name--light { color: var(--c-white) !important; }
 
 /* Nav links */
 .nav-links {
@@ -237,6 +267,13 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   transition: color var(--trs-fast), background var(--trs-fast);
 }
 .nav-links a:hover { color: var(--c-navy); background: var(--c-gray-100); }
+/* Active nav link — set by scrollspy via aria-current and .active class */
+.nav-links a.active,
+.nav-links a[aria-current="page"] {
+  color: var(--c-navy);
+  background: var(--c-gray-100);
+  font-weight: 600;
+}
 
 /* Products dropdown */
 .dropdown { position: relative; }
@@ -481,7 +518,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   gap: 32px;
   flex-wrap: wrap;
 }
-.stat { }
+
 .stat-num {
   font-size: 1.8rem;
   font-weight: 800;
@@ -601,26 +638,53 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   pointer-events: none;
 }
 
-/* Zoom lens */
-.zoom-preview {
+/* Zoom lens — rectangular highlight that follows cursor */
+.zoom-lens {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  display: none;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.25), /* dim everything outside the lens */
+              0 0 20px rgba(0,0,0,0.15);
   pointer-events: none;
+  display: none;
+  z-index: 20;
+  cursor: crosshair;
+}
+.zoom-lens-icon {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  opacity: .7;
+  pointer-events: none;
+}
+.carousel-main.zooming .zoom-lens { display: flex; }
+
+/* Floating zoom panel — appears to the right of the carousel image */
+.zoom-panel {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 14px);
+  width: 320px;
+  height: calc(100% - var(--thumbs-h)); /* matches --thumbs-h token in :root */
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 2px solid rgba(255,255,255,.5);
+  background: var(--c-white);
+  border: 1px solid var(--c-gray-300);
+  box-shadow: var(--shadow-xl);
+  display: none;
+  z-index: 100;
+  pointer-events: none;
 }
-.zoom-preview img {
+.zoom-panel img {
   position: absolute;
-  width: 200%;
-  height: 200%;
   max-width: none;
-  object-fit: cover;
-  transition: none;
+  pointer-events: none;
 }
-.carousel-main:hover .zoom-preview { display: block; }
+.carousel-main.zooming ~ .zoom-panel { display: block; }
+/* Let the panel overflow visible outside the carousel wrap */
+.carousel-wrap { position: relative; overflow: visible; z-index: 2; }
+
 
 /* Carousel nav arrows */
 .carousel-arrow {
@@ -1068,6 +1132,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   margin-top: 40px;
 }
 .faq-sidebar .section-desc { max-width: 320px; }
+/* Replaces inline style="margin-top:8px" on the FAQ sidebar CTA */
+.faq-sidebar .btn-primary { margin-top: 8px; }
 
 .faq-list { display: flex; flex-direction: column; gap: 0; }
 .faq-item {
@@ -1140,7 +1206,6 @@ footer .container { max-width: var(--max-w); margin: 0 auto; }
   padding-bottom: 48px;
   border-bottom: 1px solid rgba(255,255,255,.1);
 }
-.footer-brand { }
 .footer-logo { margin-bottom: 16px; }
 .footer-desc { font-size: .875rem; line-height: 1.7; max-width: 260px; margin-bottom: 20px; }
 .footer-socials { display: flex; gap: 10px; }
@@ -1280,15 +1345,29 @@ footer .container { max-width: var(--max-w); margin: 0 auto; }
   font-family: var(--font-main);
   color: var(--c-text);
   transition: border-color var(--trs-fast), box-shadow var(--trs-fast);
-  outline: none;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   background: var(--c-white);
 }
 .field-input:focus {
   border-color: var(--c-blue-bright);
+  outline-color: rgba(52,152,219,.4);
   box-shadow: 0 0 0 3px rgba(52,152,219,.15);
 }
 .field-input.error { border-color: var(--c-red-vivid); }
 .field-input.valid { border-color: #27ae60; }
+
+/* Inline form success message */
+.form-success {
+  display: none;
+  color: #27ae60;
+  background: rgba(39,174,96,.1);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: .9rem;
+  font-weight: 600;
+}
 
 /* Phone input with prefix */
 .phone-group { display: flex; gap: 0; }
@@ -1408,3 +1487,59 @@ footer .container { max-width: var(--max-w); margin: 0 auto; }
   box-shadow: var(--shadow-md);
 }
 .cta-strip .btn-white:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+  /* Hide interactive chrome */
+  .topbar,
+  .site-header,
+  #sticky-spacer,
+  .carousel-arrow,
+  .zoom-lens,
+  .zoom-panel,
+  .carousel-thumbs,
+  .process-tabs,
+  .scroll-top,
+  .modal-overlay,
+  .btn-primary,
+  .btn-secondary,
+  .btn-nav-cta,
+  .btn-quote,
+  .btn-datasheet,
+  .cta-strip,
+  footer .footer-socials,
+  .nav-toggle { display: none !important; }
+
+  /* Base print resets */
+  body { font-size: 12pt; color: #000; background: #fff; }
+  a    { color: #000; text-decoration: underline; }
+  img  { max-width: 100% !important; }
+
+  /* Hero — flatten to white */
+  .hero {
+    background: #f5f5f5;
+    padding: 24pt;
+    color: #000;
+  }
+  .hero-content, .hero-title, .hero-desc { color: #000; }
+  .hero-title .highlight { color: #2957a3; }
+  .hero-eyebrow { color: #2957a3; border-color: #2957a3; }
+  .stat-num, .stat-num span { color: #000; }
+
+  /* Specs table readable */
+  .specs-section { background: #fff; color: #000; }
+  .specs-section .section-title { color: #000; }
+  .specs-section .section-tag   { color: #2957a3; }
+  .specs-table thead th { color: #2957a3; }
+  .specs-table tbody td { color: #000; }
+  .spec-pill { background: #eef; color: #2957a3; }
+
+  /* Process tabs — show all panels */
+  .process-panel { display: block !important; page-break-inside: avoid; margin-bottom: 24pt; }
+
+  /* Footer minimal */
+  footer { background: #fff; color: #000; }
+  .footer-col ul li a { color: #000; }
+}
