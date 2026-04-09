@@ -117,9 +117,6 @@ html { font-size: 16px; }
     scroll-margin-top: var(--header-h);
   }
 }
-  }
-}
-
 body {
   font-family: var(--font-main);
   color: var(--c-text);
