@@ -2,7 +2,7 @@
 
 Static marketing website for Mangalam HDPE Pipes.
 
-##  Overview
+## Overview
 
 This project is a lightweight front-end site built with plain HTML, CSS, and JavaScript. It includes:
 
